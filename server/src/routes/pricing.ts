@@ -6,7 +6,8 @@ import {
   calculatePricing,
   PricingPrecisionError,
 } from "../services/pricingCalculator.js";
-import { OllamaPricingRecommender } from "../services/ai/ollamaPricingRecommender.js";
+import { OpenAiPricingRecommender } from "../services/ai/openaiPricingRecommender.js";
+import { createOpenAiClient } from "../services/ai/openaiClient.js";
 import {
   InvalidPricingRecommendationError,
   PricingAiProviderUnavailableError,
@@ -57,7 +58,7 @@ export function createPricingRouter(
           error: {
             code: "AI_PROVIDER_TIMEOUT",
             message:
-              "The local AI model did not respond within the configured timeout. Try again or increase AI_PRICING_TIMEOUT_MS.",
+              "The AI model did not respond within the configured timeout. Try again or increase AI_PRICING_TIMEOUT_MS.",
           },
         });
         return;
@@ -69,7 +70,7 @@ export function createPricingRouter(
           error: {
             code: "AI_PROVIDER_UNAVAILABLE",
             message:
-              "The local AI model is unavailable. Start Ollama and ensure the configured model is installed.",
+              "The AI service is unavailable. Check the server's OpenAI configuration and try again.",
           },
         });
         return;
@@ -88,7 +89,7 @@ export function createPricingRouter(
           error: {
             code: "INVALID_AI_OUTPUT",
             message:
-              "The local AI model returned an invalid pricing recommendation. Try again or provide more pricing context.",
+              "The AI model returned an invalid pricing recommendation. Try again or provide more pricing context.",
             details: { reason: error.reason },
           },
         });
@@ -152,9 +153,9 @@ export function createPricingRouter(
 }
 
 export const pricingRouter = createPricingRouter(
-  new OllamaPricingRecommender(
-    env.AI_OLLAMA_BASE_URL,
-    env.AI_MODEL,
+  new OpenAiPricingRecommender(
+    createOpenAiClient(env.OPENAI_API_KEY),
+    env.OPENAI_MODEL,
     env.AI_PRICING_TIMEOUT_MS,
   ),
 );

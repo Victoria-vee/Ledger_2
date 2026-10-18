@@ -1,5 +1,8 @@
 import cors from "cors";
 import express from "express";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { getDatabaseStatus } from "./config/database.js";
 import { env } from "./config/env.js";
 import { businessRouter } from "./routes/businesses.js";
@@ -36,6 +39,14 @@ app.use(
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/pricing", pricingRouter);
 app.use("/api/ai", aiRouter);
+
+const clientDist = fileURLToPath(new URL("../../client/dist", import.meta.url));
+if (existsSync(join(clientDist, "index.html"))) {
+  app.use(express.static(clientDist));
+  app.get(/^(?!\/api(?:\/|$)).*/, (_request, response) => {
+    response.sendFile("index.html", { root: clientDist });
+  });
+}
 
 app.use(
   (

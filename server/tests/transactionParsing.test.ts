@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
+import { completionWith, fakeOpenAiClient } from "./openaiFake.js";
 import { test } from "node:test";
 import {
   AiProviderUnavailableError,
   InvalidAiModelOutputError,
 } from "../src/services/ai/transactionParser.js";
-import { OllamaTransactionParser } from "../src/services/ai/ollamaTransactionParser.js";
+import { OpenAiTransactionParser } from "../src/services/ai/openaiTransactionParser.js";
 import { normalizeTransactionDrafts } from "../src/services/ai/normalizeTransactionDrafts.js";
 
 const referenceDate = "2026-10-16";
@@ -104,13 +105,12 @@ test("rejects malformed model output and ungrounded amounts", () => {
   assert.equal(result.uncertainties[0]?.field, "amount");
 });
 
-test("reports an unavailable Ollama runtime without exposing network errors", async () => {
-  const parser = new OllamaTransactionParser(
-    "http://127.0.0.1:11434",
-    "gemma3:4b",
-    async () => {
+test("reports an unavailable OpenAI service without exposing network errors", async () => {
+  const parser = new OpenAiTransactionParser(
+    fakeOpenAiClient(async () => {
       throw new Error("private transport detail");
-    },
+    }),
+    "gpt-4o-mini",
   );
 
   await assert.rejects(
@@ -119,18 +119,11 @@ test("reports an unavailable Ollama runtime without exposing network errors", as
   );
 });
 
-test("rejects malformed JSON returned by Ollama", async () => {
-  const parser = new OllamaTransactionParser(
-    "http://127.0.0.1:11434",
-    "gemma3:4b",
-    async () =>
-      new Response(
-        JSON.stringify({
-          done_reason: "stop",
-          message: { content: "not JSON" },
-        }),
-        { status: 200 },
-      ),
+test("rejects malformed JSON returned by OpenAI", async () => {
+  const parser = new OpenAiTransactionParser(
+    fakeOpenAiClient(async () =>
+      completionWith("not JSON")),
+    "gpt-4o-mini",
   );
 
   await assert.rejects(
@@ -139,18 +132,11 @@ test("rejects malformed JSON returned by Ollama", async () => {
   );
 });
 
-test("accepts valid Ollama JSON output for subsequent server validation", async () => {
-  const parser = new OllamaTransactionParser(
-    "http://127.0.0.1:11434",
-    "gemma3:4b",
-    async () =>
-      new Response(
-        JSON.stringify({
-          done_reason: "stop",
-          message: { content: JSON.stringify(validModelOutput) },
-        }),
-        { status: 200 },
-      ),
+test("accepts valid OpenAI JSON output for subsequent server validation", async () => {
+  const parser = new OpenAiTransactionParser(
+    fakeOpenAiClient(async () =>
+      completionWith(JSON.stringify(validModelOutput))),
+    "gpt-4o-mini",
   );
 
   const rawOutput = await parser.parseTransactions(

@@ -32,7 +32,9 @@ Copy-Item server/.env.example server/.env
 ```
 
 The example file contains placeholder values only. Edit `server/.env` locally
-and replace `MONGODB_URI` with the connection string from your Atlas cluster.
+and replace `MONGODB_URI` with the connection string from your Atlas cluster and
+`OPENAI_API_KEY` with a key from your OpenAI account (`OPENAI_MODEL` defaults
+to `gpt-4o-mini`).
 Do not paste it into chat, commit `.env` files, or put secrets in frontend
 environment variables.
 
@@ -78,18 +80,18 @@ The interface includes:
 - **Businesses:** create a profile and switch between existing businesses.
 - **Transactions:** list, search, filter, create, edit, and delete records.
 - **Price Calculator:** calculate markup-based estimates through
-  `POST /api/pricing/calculate`, request optional local AI guidance through
+  `POST /api/pricing/calculate`, request optional AI guidance through
   `POST /api/pricing/recommend`, and explicitly save reviewed product or
   service prices to the selected business. **Saved Prices** lists and manages
   those records.
-- **AI entry:** request drafts from the local Ollama endpoint, edit each field,
+- **AI entry:** request drafts from OpenAI, edit each field,
   and explicitly confirm each transaction before it is submitted. Missing
   amounts and dates are shown as uncertain; an amount and date must be supplied
   before saving.
 
 The dashboard does not invent placeholder financial values. Create/select a
-business to load real API data. AI parsing requires Ollama running locally with
-the configured model; unavailable inference is shown as an API error, not
+business to load real API data. AI features require a valid `OPENAI_API_KEY`;
+unavailable inference is shown as an API error, not
 replaced with sample output.
 
 ## Type checking and build
@@ -332,18 +334,16 @@ Each alternative returns gross profit per unit, projected gross profit for
 `quantity`, and gross margin. A zero selling price has an unavailable margin.
 No break-even estimate is calculated because no fixed costs are collected.
 
-### Local AI pricing assistance
+### AI pricing assistance
 
 `POST /api/pricing/recommend` accepts the same deterministic calculation
 inputs, wrapped in `calculation`, and optional product/business context in
-`context`. It uses the configured local Ollama model only. Start Ollama and
-ensure the model configured by `AI_MODEL` is installed; the setup is the same
+`context`. It uses the OpenAI model configured by `OPENAI_MODEL`; the setup is the same
 as for [AI-assisted transaction entry](#ai-assisted-transaction-entry). A
 provider connection or HTTP failure returns HTTP `503`
 (`AI_PROVIDER_UNAVAILABLE`); an inference request that exceeds
 `AI_PRICING_TIMEOUT_MS` returns HTTP `504` (`AI_PROVIDER_TIMEOUT`); invalid or
-unsupported model output returns HTTP `502` (`INVALID_AI_OUTPUT`). No external
-AI provider is used.
+unsupported model output returns HTTP `502` (`INVALID_AI_OUTPUT`).
 
 The pricing recommendation timeout defaults to 180 seconds. Configure
 `AI_PRICING_TIMEOUT_MS` in `server/.env` as a positive integer from 1 through
@@ -558,8 +558,8 @@ Invoke-RestMethod -Method Delete -Uri "$baseUrl/api/businesses/$businessId"
 
 ## AI-assisted transaction entry
 
-`POST /api/ai/parse-transactions` uses the local Ollama runtime and the
-configured Gemma model to return transaction drafts for review. It does not
+`POST /api/ai/parse-transactions` uses OpenAI and the
+configured model to return transaction drafts for review. It does not
 create or save transactions; after reviewing and completing any uncertain
 fields, submit confirmed data through the existing
 `POST /api/businesses/:businessId/transactions` endpoint.
@@ -573,15 +573,11 @@ unambiguous relative words `today` and `yesterday` (anchored to the server's
 UTC date). Unsupported, missing, or ambiguous values are returned as `null`
 with an uncertainty instead of being invented.
 
-The server defaults to `http://127.0.0.1:11434` and `gemma3:4b`. These can be
-overridden using `AI_OLLAMA_BASE_URL` and `AI_MODEL` in `server/.env`; the
-runtime URL must remain a loopback address, so parsing never calls a paid or
-remote model API. AI pricing recommendations use `AI_PRICING_TIMEOUT_MS`
-(default 180000 milliseconds), while transaction parsing retains its existing
-separate timeout. This project uses the existing local Gemma model and native
-Node `fetch`; no additional dependency is required. Check available models
-with `ollama list`. If needed, start Ollama with `ollama serve` and install the
-model using `ollama pull gemma3:4b`.
+Set `OPENAI_API_KEY` (required) and optionally `OPENAI_MODEL` (default
+`gpt-4o-mini`) in `server/.env`. The text of each request is sent to OpenAI, so
+avoid entering data you do not want shared with that provider. Keep the key
+server-side only. AI pricing recommendations use `AI_PRICING_TIMEOUT_MS` (default 180000 milliseconds), while transaction parsing retains its existing
+separate timeout.
 
 Example PowerShell request (use a business you created with the Business API):
 
@@ -613,28 +609,39 @@ Invoke-RestMethod -Method Post `
 ```
 
 Malformed model JSON or schema output returns HTTP `502` with
-`INVALID_AI_OUTPUT`. A valid request to a stopped/unavailable local runtime
-returns HTTP `503` with `AI_PROVIDER_UNAVAILABLE`; missing model setup is
-reported without exposing provider details. The focused tests exercise valid
-and malformed provider output, ambiguous fields, and unavailable runtime
-handling:
+`INVALID_AI_OUTPUT`. An OpenAI failure (invalid key, quota, network) returns
+HTTP `503` with `AI_PROVIDER_UNAVAILABLE` without exposing provider details.
+The focused tests use a fake OpenAI client to exercise valid and malformed
+provider output, ambiguous fields, and unavailable-provider handling:
 
 ```powershell
 npm run test --workspace=server
 ```
 
-To check the unavailable-runtime HTTP response without changing `.env`, stop
-the dev server and start it in the same PowerShell session with a loopback
-port that has no listener:
+## Deploying to Render
 
-```powershell
-$env:AI_OLLAMA_BASE_URL = 'http://127.0.0.1:11435'
-npm run dev --workspace=server
-```
+Ledger deploys as a single Render Web Service: the Express server also serves
+the built React app (`client/dist`) and falls back to `index.html` for non-API
+routes. The included `render.yaml` Blueprint configures it (Node 22, build
+`npm ci --include=dev && npm run build`, start `npm start --workspace=server`,
+health check `/api/health`). `--include=dev` is required because Render sets
+`NODE_ENV=production`, which would otherwise skip `typescript` and `vite`.
 
-Send the valid request from another terminal; it should return HTTP `503`.
-Remove the temporary override from that PowerShell session with
-`Remove-Item Env:AI_OLLAMA_BASE_URL` after stopping the test server.
+1. Push the repository to GitHub, then in Render choose **New → Blueprint** and
+   select it.
+2. Set the secret environment variables when prompted (they are `sync: false` and never stored in the repo):
+   - `MONGODB_URI`: your Atlas connection string.
+   - `OPENAI_API_KEY`: your OpenAI API key.
+   - `CLIENT_ORIGIN`: the service's public URL, e.g.
+     `https://ledger.onrender.com` (used for CORS).
+   - `OPENAI_MODEL` is optional and defaults to `gpt-4o-mini`.
+3. In Atlas **Network Access**, allow Render to connect. Render web services
+   use shared outbound IP ranges (listed under the service's **Connect →
+   Outbound** tab); add those, or use `0.0.0.0/0` only if you accept that risk
+   and rely on strong database credentials.
+4. Render calls `/api/health` and marks the deploy healthy once it returns
+   HTTP 200, which requires the database to be connected. If it stays
+   unhealthy, check Atlas network access and `MONGODB_URI` in the logs.
 
 ## MongoDB Atlas
 
@@ -644,7 +651,7 @@ Remove the temporary override from that PowerShell session with
    machine running Ledger. Atlas blocks unlisted addresses by default. Do not
    use `0.0.0.0/0` as the default; for deployment, allow only the application's
    known outbound IPs or use an appropriate private network configuration.
-3. In Atlas, choose **Connect → Drivers** and copy the Node.js connection
+3. In Atlas, choose **Connect â†’ Drivers** and copy the Node.js connection
    string. Replace its username, password, and database name as instructed by
    Atlas. Percent-encode reserved characters in the username or password.
 4. Put the complete URI in `server/.env` as `MONGODB_URI`. Keep it server-side;
