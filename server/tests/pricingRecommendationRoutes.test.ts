@@ -8,7 +8,7 @@ import {
   PricingAiTimeoutError,
   type PricingRecommender,
 } from "../src/services/ai/pricingRecommender.js";
-import { llmPricingRecommender } from "../src/services/ai/llmPricingRecommender.js";
+import { LlmPricingRecommender } from "../src/services/ai/llmPricingRecommender.js";
 
 process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/ledger_test";
 process.env.GROQ_API_KEY = "test-key";
@@ -137,10 +137,10 @@ test("maps model prose rejected by the qualitative schema to HTTP 502", async ()
       "A lower price may feel more accessible, while a higher price improves gross profit.",
     scenarios: [],
   };
-  const recommender = new llmPricingRecommender(
+  const recommender = new LlmPricingRecommender(
     fakeChatClient(async () =>
       completionWith(JSON.stringify(modelOutput))),
-    "llama-3.3-70b-versatile", 180_000
+    "openai/gpt-oss-120b", 180_000
   );
 
   const result = await postRecommendationWith(recommender);
@@ -177,10 +177,10 @@ test("returns deterministic ordered scenario prices when model labels are shuffl
       },
     ],
   };
-  const recommender = new llmPricingRecommender(
+  const recommender = new LlmPricingRecommender(
     fakeChatClient(async () =>
       completionWith(JSON.stringify(modelOutput))),
-    "llama-3.3-70b-versatile", 180_000
+    "openai/gpt-oss-120b", 180_000
   );
 
   const result = await postRecommendationWith(recommender);

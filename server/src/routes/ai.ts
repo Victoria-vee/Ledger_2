@@ -4,7 +4,7 @@ import { env } from "../config/env.js";
 import { BusinessModel } from "../models/business.js";
 import { parseTransactionsRequestSchema } from "../schemas/ai.js";
 import { normalizeTransactionDrafts } from "../services/ai/normalizeTransactionDrafts.js";
-import { llmTransactionParser } from "../services/ai/llmTransactionParser.js";
+import { LlmTransactionParser } from "../services/ai/llmTransactionParser.js";
 import { createGroqClient } from "../services/ai/chatClient.js";
 import {
   AiProviderUnavailableError,
@@ -13,7 +13,7 @@ import {
 
 export const aiRouter = Router();
 
-const transactionParser = new llmTransactionParser(
+const transactionParser = new LlmTransactionParser(
   createGroqClient(env.GROQ_API_KEY),
   env.AI_MODEL,
 );
