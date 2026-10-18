@@ -4,7 +4,7 @@ import type { PricingRecommendationContext } from "../../schemas/pricingRecommen
 import {
   isChatCompletionResult,
   type ChatCompletionClient,
-} from "./openaiClient.js";
+} from "./chatClient.js";
 import {
   InvalidPricingRecommendationError,
   PricingAiTimeoutError,
@@ -26,7 +26,7 @@ function mapTransportError(error: unknown): never {
   throw new PricingAiProviderUnavailableError();
 }
 
-export class OpenAiPricingRecommender implements PricingRecommender {
+export class llmPricingRecommender implements PricingRecommender {
   constructor(
     private readonly client: ChatCompletionClient,
     private readonly model: string,

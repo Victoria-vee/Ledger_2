@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { completionWith, fakeOpenAiClient } from "./openaiFake.js";
+import { completionWith, fakeChatClient } from "./chatFake.js";
 import { test } from "node:test";
 import express from "express";
 import {
@@ -8,10 +8,10 @@ import {
   PricingAiTimeoutError,
   type PricingRecommender,
 } from "../src/services/ai/pricingRecommender.js";
-import { OpenAiPricingRecommender } from "../src/services/ai/openaiPricingRecommender.js";
+import { llmPricingRecommender } from "../src/services/ai/llmPricingRecommender.js";
 
 process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/ledger_test";
-process.env.OPENAI_API_KEY = "test-key";
+process.env.GROQ_API_KEY = "test-key";
 const { createPricingRouter } = await import("../src/routes/pricing.js");
 
 async function postRecommendationWith(
@@ -137,10 +137,10 @@ test("maps model prose rejected by the qualitative schema to HTTP 502", async ()
       "A lower price may feel more accessible, while a higher price improves gross profit.",
     scenarios: [],
   };
-  const recommender = new OpenAiPricingRecommender(
-    fakeOpenAiClient(async () =>
+  const recommender = new llmPricingRecommender(
+    fakeChatClient(async () =>
       completionWith(JSON.stringify(modelOutput))),
-    "gpt-4o-mini", 180_000
+    "llama-3.3-70b-versatile", 180_000
   );
 
   const result = await postRecommendationWith(recommender);
@@ -177,10 +177,10 @@ test("returns deterministic ordered scenario prices when model labels are shuffl
       },
     ],
   };
-  const recommender = new OpenAiPricingRecommender(
-    fakeOpenAiClient(async () =>
+  const recommender = new llmPricingRecommender(
+    fakeChatClient(async () =>
       completionWith(JSON.stringify(modelOutput))),
-    "gpt-4o-mini", 180_000
+    "llama-3.3-70b-versatile", 180_000
   );
 
   const result = await postRecommendationWith(recommender);

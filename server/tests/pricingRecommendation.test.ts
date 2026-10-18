@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { completionWith, fakeOpenAiClient } from "./openaiFake.js";
+import { completionWith, fakeChatClient } from "./chatFake.js";
 import { test } from "node:test";
 import { pricingRecommendationRequestSchema } from "../src/schemas/pricingRecommendation.js";
 import { modelPricingRecommendationJsonSchema } from "../src/schemas/pricingRecommendation.js";
@@ -11,7 +11,7 @@ import {
   PricingAiProviderUnavailableError,
   type PricingRecommender,
 } from "../src/services/ai/pricingRecommender.js";
-import { OpenAiPricingRecommender } from "../src/services/ai/openaiPricingRecommender.js";
+import { llmPricingRecommender } from "../src/services/ai/llmPricingRecommender.js";
 import { createPricingRecommendation } from "../src/services/pricingRecommendation.js";
 
 const request = pricingRecommendationRequestSchema.parse({
@@ -241,7 +241,7 @@ test("rejects unverified financial figures in model prose", async () => {
   );
 });
 
-test("publishes the qualitative-text rule in the OpenAI JSON schema", () => {
+test("publishes the qualitative-text rule in the Groq JSON schema", () => {
   const properties =
     modelPricingRecommendationJsonSchema.properties as Record<
       string,
@@ -327,12 +327,12 @@ test("omits scenarios when the validated range cannot hold three distinct cent p
   assert.deepEqual(result.recommendation.scenarios, []);
 });
 
-test("maps OpenAI transport failures to a safe provider error", async () => {
-  const recommender = new OpenAiPricingRecommender(
-    fakeOpenAiClient(async () => {
+test("maps Groq transport failures to a safe provider error", async () => {
+  const recommender = new llmPricingRecommender(
+    fakeChatClient(async () => {
       throw new Error("private connection detail");
     }),
-    "gpt-4o-mini", 180_000
+    "llama-3.3-70b-versatile", 180_000
   );
 
   await assert.rejects(
@@ -347,11 +347,11 @@ test("maps OpenAI transport failures to a safe provider error", async () => {
   );
 });
 
-test("maps invalid OpenAI response and malformed recommendation JSON safely", async () => {
-  const recommender = new OpenAiPricingRecommender(
-    fakeOpenAiClient(async () =>
+test("maps invalid Groq response and malformed recommendation JSON safely", async () => {
+  const recommender = new llmPricingRecommender(
+    fakeChatClient(async () =>
       completionWith("not JSON")),
-    "gpt-4o-mini", 180_000
+    "llama-3.3-70b-versatile", 180_000
   );
 
   await assert.rejects(
@@ -366,14 +366,14 @@ test("maps invalid OpenAI response and malformed recommendation JSON safely", as
 
 test("maps an inference timeout to its distinct timeout error", async () => {
   let receivedSignal: AbortSignal | null = null;
-  const recommender = new OpenAiPricingRecommender(
-    fakeOpenAiClient(async (_input, init) => {
+  const recommender = new llmPricingRecommender(
+    fakeChatClient(async (_input, init) => {
       if (init?.signal instanceof AbortSignal) {
         receivedSignal = init.signal;
       }
       throw new DOMException("inference deadline expired", "TimeoutError");
     }),
-    "gpt-4o-mini", 180_000
+    "llama-3.3-70b-versatile", 180_000
   );
 
   await assert.rejects(
@@ -389,11 +389,11 @@ test("classifies connection refusal as provider unavailable, not timeout", async
       code: "ECONNREFUSED",
     }),
   });
-  const recommender = new OpenAiPricingRecommender(
-    fakeOpenAiClient(async () => {
+  const recommender = new llmPricingRecommender(
+    fakeChatClient(async () => {
       throw connectionError;
     }),
-    "gpt-4o-mini", 180_000
+    "llama-3.3-70b-versatile", 180_000
   );
 
   await assert.rejects(

@@ -2,14 +2,14 @@ import { modelTransactionParseJsonSchema } from "../../schemas/ai.js";
 import {
   isChatCompletionResult,
   type ChatCompletionClient,
-} from "./openaiClient.js";
+} from "./chatClient.js";
 import {
   AiProviderUnavailableError,
   InvalidAiModelOutputError,
   type TransactionParser,
 } from "./transactionParser.js";
 
-export class OpenAiTransactionParser implements TransactionParser {
+export class llmTransactionParser implements TransactionParser {
   constructor(
     private readonly client: ChatCompletionClient,
     private readonly model: string,

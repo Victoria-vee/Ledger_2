@@ -4,8 +4,8 @@ import { env } from "../config/env.js";
 import { BusinessModel } from "../models/business.js";
 import { parseTransactionsRequestSchema } from "../schemas/ai.js";
 import { normalizeTransactionDrafts } from "../services/ai/normalizeTransactionDrafts.js";
-import { OpenAiTransactionParser } from "../services/ai/openaiTransactionParser.js";
-import { createOpenAiClient } from "../services/ai/openaiClient.js";
+import { llmTransactionParser } from "../services/ai/llmTransactionParser.js";
+import { createGroqClient } from "../services/ai/chatClient.js";
 import {
   AiProviderUnavailableError,
   InvalidAiModelOutputError,
@@ -13,9 +13,9 @@ import {
 
 export const aiRouter = Router();
 
-const transactionParser = new OpenAiTransactionParser(
-  createOpenAiClient(env.OPENAI_API_KEY),
-  env.OPENAI_MODEL,
+const transactionParser = new llmTransactionParser(
+  createGroqClient(env.GROQ_API_KEY),
+  env.AI_MODEL,
 );
 
 aiRouter.post("/parse-transactions", async (request, response) => {
@@ -69,7 +69,7 @@ aiRouter.post("/parse-transactions", async (request, response) => {
         error: {
           code: "AI_PROVIDER_UNAVAILABLE",
           message:
-            "The AI service is unavailable. Check the server's OpenAI configuration and try again.",
+            "The AI service is unavailable. Check the server's Groq configuration and try again.",
         },
       });
       return;
