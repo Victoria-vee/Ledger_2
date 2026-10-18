@@ -33,7 +33,7 @@ Copy-Item server/.env.example server/.env
 
 The example file contains placeholder values only. Edit `server/.env` locally
 and replace `MONGODB_URI` with the connection string from your Atlas cluster and
-`GROQ_API_KEY` with a key from your Groq account (https://console.groq.com) (`AI_MODEL` defaults
+`GROQ_API_KEY` with a key from your Groq account <https://console.groq.com> (`AI_MODEL` defaults
 to `openai/gpt-oss-120b`).
 Do not paste it into chat, commit `.env` files, or put secrets in frontend
 environment variables.
@@ -572,6 +572,10 @@ numeric total; dates are normalized only from an explicit ISO date or the
 unambiguous relative words `today` and `yesterday` (anchored to the server's
 UTC date). Unsupported, missing, or ambiguous values are returned as `null`
 with an uncertainty instead of being invented.
+Clear action words help identify transaction type: `bought`, `purchased`, or
+`spent` suggest an expense; `sold`, `earned`, or `received payment` suggest
+income. When both directions appear or no clear cue exists, review the type
+manually before saving.
 
 Set `GROQ_API_KEY` (required) and optionally `AI_MODEL` (default
 `openai/gpt-oss-120b`) in `server/.env`. The text of each request is sent to Groq, so

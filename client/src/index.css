@@ -91,14 +91,12 @@
 }
 
 html {
-  min-width: 320px;
   min-height: 100%;
   background: var(--page-background);
   scroll-behavior: smooth;
 }
 
 body {
-  min-width: 320px;
   min-height: 100vh;
   margin: 0;
   font-family: var(--font-sans);
@@ -468,9 +466,14 @@ textarea:focus-visible {
 
 .page-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
+}
+
+.page-heading > * {
+  min-width: 0;
 }
 
 .page-heading h1 {
@@ -480,6 +483,7 @@ textarea:focus-visible {
   font-weight: 650;
   letter-spacing: -0.055em;
   line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 .eyebrow {
@@ -912,7 +916,7 @@ textarea:focus-visible {
     bottom: max(12px, env(safe-area-inset-bottom));
     left: 12px;
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     gap: 3px;
     overflow-x: auto;
     scrollbar-width: none;
@@ -926,8 +930,8 @@ textarea:focus-visible {
 
   .mobile-nav-item {
     display: flex;
-    min-width: 58px;
-    flex: 0 0 auto;
+    min-width: 0;
+    flex: 1 1 0;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -939,7 +943,14 @@ textarea:focus-visible {
     color: var(--text-muted);
     font-size: 9px;
     font-weight: 550;
-    white-space: nowrap;
+  }
+
+  .mobile-nav-item > span {
+    max-width: 100%;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    text-align: center;
+    white-space: normal;
   }
 
   .mobile-nav::-webkit-scrollbar {

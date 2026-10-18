@@ -54,13 +54,15 @@ export default function AiEntry({
       );
       setUncertainties(result.uncertainties);
       if (result.drafts.length === 0) {
-        setSuccess("No transaction draft was confidently identified. Add more detail and try again.");
+        setSuccess(
+          "No transaction draft was identified. Try a clear action word such as “bought” for an expense or “sold” for income, and include the amount and date when available.",
+        );
       }
     } catch (parseError) {
       setError(
         parseError instanceof Error
           ? parseError.message
-          : "The local AI model could not parse this text.",
+          : "The AI service could not parse this text.",
       );
     } finally {
       setParsing(false);
@@ -122,15 +124,15 @@ export default function AiEntry({
     <div className="space-y-6">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">LOCAL AI ASSISTANT</p>
+          <p className="eyebrow">AI-ASSISTED TRANSACTIONS</p>
           <h1>Draft a transaction</h1>
           <p className="mt-2 text-sm text-muted">
             Describe what happened. Review every detail before saving.
           </p>
         </div>
-        <span className="badge-note badge-local">
+        <span className="badge-note">
           <span className="size-1.5 rounded-full bg-success" />
-          Local model
+          Groq-hosted model
         </span>
       </div>
 
@@ -155,6 +157,11 @@ export default function AiEntry({
             />
             <small className="text-right">{text.length}/2000 characters</small>
           </label>
+          <p className="text-sm leading-5 text-muted" role="note">
+            Tip: “bought,” “purchased,” or “spent” suggests an expense; “sold,”
+            “earned,” or “received payment” suggests income. Include the amount
+            and date when available, then review the draft before saving.
+          </p>
           {error ? <p className="form-error" role="alert">{error}</p> : null}
           {success ? <p className="form-success" role="status">{success}</p> : null}
           <button

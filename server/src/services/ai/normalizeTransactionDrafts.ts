@@ -24,11 +24,27 @@ export interface TransactionDraftResponse {
   requiresReview: true;
 }
 
+type TransactionType = TransactionDraft["type"];
+
 function hasExactQuote(text: string, quote: string | null): quote is string {
   return (
     quote !== null &&
     text.toLocaleLowerCase().includes(quote.toLocaleLowerCase())
   );
+}
+
+function inferTransactionType(text: string): TransactionType | null {
+  const hasExpenseCue =
+    /\b(?:bought|purchased|spent|expense|expenses)\b/i.test(text);
+  const hasIncomeCue =
+    /\b(?:sold|earned|received\s+(?:a\s+)?payment|income|revenue)\b/i.test(
+      text,
+    );
+
+  if (hasExpenseCue === hasIncomeCue) {
+    return null;
+  }
+  return hasExpenseCue ? "expense" : "income";
 }
 
 function getNumericTokens(text: string): number[] {
@@ -122,6 +138,7 @@ export function normalizeTransactionDrafts(
   const parsed = validateOutput(rawOutput);
   const drafts: TransactionDraft[] = [];
   const uncertainties: TransactionDraftUncertainty[] = [];
+  const textType = inferTransactionType(text);
 
   function addUncertainty(
     draftIndex: number | null,
@@ -144,6 +161,9 @@ export function normalizeTransactionDrafts(
       uncertainty.draftIndex === null ||
       uncertainty.draftIndex >= parsed.drafts.length
     ) {
+      if (uncertainty.field === "type" && textType !== null) {
+        continue;
+      }
       addUncertainty(null, uncertainty.field, uncertainty.reason);
     }
   }
@@ -155,7 +175,12 @@ export function normalizeTransactionDrafts(
     const typeUncertainty = sourceUncertainties.find(
       (uncertainty) => uncertainty.field === "type",
     );
-    if (typeUncertainty) {
+    const evidenceType =
+      draft.typeEvidence && hasExactQuote(text, draft.typeEvidence)
+        ? inferTransactionType(draft.typeEvidence)
+        : null;
+    const resolvedType = evidenceType ?? textType;
+    if (typeUncertainty && resolvedType === null) {
       addUncertainty(null, "type", typeUncertainty.reason);
       return;
     }
@@ -207,7 +232,7 @@ export function normalizeTransactionDrafts(
     }
 
     drafts.push({
-      type: draft.type,
+      type: resolvedType ?? draft.type,
       description: draft.description,
       amount,
       date,

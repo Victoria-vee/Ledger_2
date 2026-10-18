@@ -16,6 +16,7 @@ export const parseTransactionsRequestSchema = z
 const modelTransactionDraftSchema = z
   .object({
     type: z.enum(["income", "expense"]),
+    typeEvidence: z.string().trim().max(200).nullable().optional(),
     description: z.string().trim().min(1).max(500),
     amount: z.number().finite().positive().nullable(),
     date: z.string().trim().min(1).max(100).nullable(),

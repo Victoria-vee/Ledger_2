@@ -75,6 +75,87 @@ test("marks missing amount and ambiguous date for review", () => {
   assert.equal(result.requiresReview, true);
 });
 
+test("uses clear action keywords to resolve a model type uncertainty", () => {
+  const result = normalizeTransactionDrafts(
+    {
+      drafts: [
+        {
+          ...validModelOutput.drafts[0],
+          type: "income",
+          description: "Printer paper",
+        },
+      ],
+      uncertainties: [
+        {
+          draftIndex: 0,
+          field: "type",
+          reason: "The transaction type is unclear.",
+        },
+      ],
+    },
+    "Bought printer paper for 5,000 today.",
+    referenceDate,
+  );
+
+  assert.equal(result.drafts[0]?.type, "expense");
+  assert.equal(result.uncertainties.some(({ field }) => field === "type"), false);
+});
+
+test("uses per-draft type evidence when the input contains both directions", () => {
+  const result = normalizeTransactionDrafts(
+    {
+      drafts: [
+        {
+          ...validModelOutput.drafts[0],
+          type: "income",
+          typeEvidence: "bought",
+        },
+        {
+          ...validModelOutput.drafts[0],
+          type: "expense",
+          amount: 8000,
+          description: "Product sale",
+          amountEvidence: "8,000",
+          typeEvidence: "sold",
+        },
+      ],
+      uncertainties: [],
+    },
+    "Bought stock for 5,000 today, then sold a product for 8,000 today.",
+    referenceDate,
+  );
+
+  assert.deepEqual(
+    result.drafts.map(({ type }) => type),
+    ["expense", "income"],
+  );
+});
+
+test("keeps transaction type uncertain when keywords conflict or are absent", () => {
+  const result = normalizeTransactionDrafts(
+    {
+      drafts: [
+        {
+          ...validModelOutput.drafts[0],
+          typeEvidence: null,
+        },
+      ],
+      uncertainties: [
+        {
+          draftIndex: 0,
+          field: "type",
+          reason: "The transaction type is unclear.",
+        },
+      ],
+    },
+    "Bought stock and sold a product.",
+    referenceDate,
+  );
+
+  assert.equal(result.drafts.length, 0);
+  assert.equal(result.uncertainties[0]?.field, "type");
+});
+
 test("rejects malformed model output and ungrounded amounts", () => {
   assert.throws(
     () =>
