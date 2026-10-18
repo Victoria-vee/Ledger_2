@@ -191,19 +191,6 @@ export default function App() {
     setSection("pricing");
   }
 
-  const sectionTitle =
-    section === "dashboard"
-      ? "Overview"
-      : section === "transactions"
-        ? "Transactions"
-        : section === "ai"
-          ? "AI transaction entry"
-          : section === "pricing"
-            ? "Price Calculator"
-            : section === "saved-prices"
-              ? "Saved Prices"
-            : "Businesses";
-
   return (
     <div className="min-h-screen bg-page text-ink">
       <header className="app-header">
