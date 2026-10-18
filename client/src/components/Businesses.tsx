@@ -80,7 +80,7 @@ export default function Businesses({
               <input
                 maxLength={120}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="e.g. Olive & Oak Studio"
+                placeholder="Olive & Oak Studio"
                 required
                 value={name}
               />
@@ -91,7 +91,7 @@ export default function Businesses({
                 <input
                   maxLength={100}
                   onChange={(event) => setIndustry(event.target.value)}
-                  placeholder="e.g. Design"
+                  placeholder="Design"
                   value={industry}
                 />
               </label>

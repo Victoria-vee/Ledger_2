@@ -380,7 +380,7 @@ export default function PricingCalculator({
                 <input
                   maxLength={200}
                   onChange={(event) => updateName(event.target.value)}
-                  placeholder="e.g. Handmade Tote Bag or Logo Design"
+                  placeholder="Handmade Tote Bag"
                   value={name}
                 />
               </label>
@@ -564,7 +564,7 @@ function PricingAdviceForm({
           <input
             maxLength={200}
             onChange={(event) => onContextChange("businessType", event.target.value)}
-            placeholder="e.g. Tailoring"
+            placeholder="Tailoring"
             value={context.businessType ?? ""}
           />
         </label>
@@ -573,7 +573,7 @@ function PricingAdviceForm({
           <input
             maxLength={300}
             onChange={(event) => onContextChange("intendedCustomer", event.target.value)}
-            placeholder="e.g. Local families"
+            placeholder="Local families"
             value={context.intendedCustomer ?? ""}
           />
         </label>
@@ -592,7 +592,7 @@ function PricingAdviceForm({
           <input
             maxLength={200}
             onChange={(event) => onContextChange("perceivedQuality", event.target.value)}
-            placeholder="e.g. Premium, handmade"
+            placeholder="Premium, handmade"
             value={context.perceivedQuality ?? ""}
           />
         </label>
@@ -601,7 +601,7 @@ function PricingAdviceForm({
           <input
             maxLength={300}
             onChange={(event) => onContextChange("pricingGoal", event.target.value)}
-            placeholder="e.g. Introductory offer"
+            placeholder="Introductory offer"
             value={context.pricingGoal ?? ""}
           />
         </label>

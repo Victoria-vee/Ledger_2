@@ -277,11 +277,6 @@ export default function App() {
         </aside>
 
         <main className="main-content">
-          <div className="mobile-title">
-            <span className="text-xs font-medium uppercase tracking-[0.14em] text-muted">LEDGER WORKSPACE</span>
-            <span className="mt-1 block font-semibold text-ink">{sectionTitle}</span>
-          </div>
-
           {businessesError ? (
             <div className="notice notice-error mb-6" role="alert">
               <span>{businessesError}</span>

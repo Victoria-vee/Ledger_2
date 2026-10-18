@@ -89,7 +89,7 @@ export default function TransactionForm({
 
   return (
     <form className="space-y-5" onSubmit={submit}>
-      <div className="flex gap-2 rounded-2xl bg-success-soft p-1.5">
+      <div className="flex gap-2 rounded-2xl p-1.5">
         {(["expense", "income"] as TransactionType[]).map((value) => (
           <button
             aria-pressed={type === value}
@@ -110,7 +110,7 @@ export default function TransactionForm({
             autoFocus
             maxLength={500}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="e.g. Website design project"
+            placeholder=" Website design project"
             required
             value={description}
           />
@@ -153,7 +153,7 @@ export default function TransactionForm({
           <input
             maxLength={100}
             onChange={(event) => setCategory(event.target.value)}
-            placeholder="e.g. Supplies"
+            placeholder="Supplies"
             value={category}
           />
         </label>

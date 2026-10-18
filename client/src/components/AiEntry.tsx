@@ -150,7 +150,7 @@ export default function AiEntry({
             <textarea
               maxLength={2000}
               onChange={(event) => setText(event.target.value)}
-              placeholder="For example: Received 25,000 naira from a customer today for the logo design project."
+              placeholder="Received 25,000 naira from a customer today for the logo design project."
               required
               rows={4}
               value={text}
@@ -292,7 +292,7 @@ export default function AiEntry({
                     <input
                       maxLength={100}
                       onChange={(event) => updateDraft(draft.sourceIndex, "category", event.target.value)}
-                      placeholder="e.g. Sales"
+                      placeholder="Sales"
                       value={draft.category}
                     />
                   </label>
