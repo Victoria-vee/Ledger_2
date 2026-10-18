@@ -11,9 +11,9 @@ services:
         value: 22
       - key: MONGODB_URI
         sync: false
-      - key: OPENAI_API_KEY
+      - key: GROQ_API_KEY
         sync: false
       - key: CLIENT_ORIGIN
         sync: false
-      - key: OPENAI_MODEL
-        value: gpt-4o-mini
+      - key: AI_MODEL
+        value: llama-3.3-70b-versatile

@@ -2,9 +2,9 @@ import type {
   ChatCompletionClient,
   ChatCompletionRequest,
   ChatCompletionResult,
-} from "../src/services/ai/openaiClient.js";
+} from "../src/services/ai/chatClient.js";
 
-export function fakeOpenAiClient(
+export function fakeChatClient(
   handler: (
     body: ChatCompletionRequest,
     options?: { signal?: AbortSignal },

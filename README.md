@@ -33,8 +33,8 @@ Copy-Item server/.env.example server/.env
 
 The example file contains placeholder values only. Edit `server/.env` locally
 and replace `MONGODB_URI` with the connection string from your Atlas cluster and
-`OPENAI_API_KEY` with a key from your OpenAI account (`OPENAI_MODEL` defaults
-to `gpt-4o-mini`).
+`GROQ_API_KEY` with a key from your Groq account (https://console.groq.com) (`AI_MODEL` defaults
+to `llama-3.3-70b-versatile`).
 Do not paste it into chat, commit `.env` files, or put secrets in frontend
 environment variables.
 
@@ -84,13 +84,13 @@ The interface includes:
   `POST /api/pricing/recommend`, and explicitly save reviewed product or
   service prices to the selected business. **Saved Prices** lists and manages
   those records.
-- **AI entry:** request drafts from OpenAI, edit each field,
+- **AI entry:** request drafts from a Groq-hosted open-weight model, edit each field,
   and explicitly confirm each transaction before it is submitted. Missing
   amounts and dates are shown as uncertain; an amount and date must be supplied
   before saving.
 
 The dashboard does not invent placeholder financial values. Create/select a
-business to load real API data. AI features require a valid `OPENAI_API_KEY`;
+business to load real API data. AI features require a valid `GROQ_API_KEY`;
 unavailable inference is shown as an API error, not
 replaced with sample output.
 
@@ -338,7 +338,7 @@ No break-even estimate is calculated because no fixed costs are collected.
 
 `POST /api/pricing/recommend` accepts the same deterministic calculation
 inputs, wrapped in `calculation`, and optional product/business context in
-`context`. It uses the OpenAI model configured by `OPENAI_MODEL`; the setup is the same
+`context`. It uses the open-weight model (via Groq) configured by `AI_MODEL`; the setup is the same
 as for [AI-assisted transaction entry](#ai-assisted-transaction-entry). A
 provider connection or HTTP failure returns HTTP `503`
 (`AI_PROVIDER_UNAVAILABLE`); an inference request that exceeds
@@ -558,7 +558,7 @@ Invoke-RestMethod -Method Delete -Uri "$baseUrl/api/businesses/$businessId"
 
 ## AI-assisted transaction entry
 
-`POST /api/ai/parse-transactions` uses OpenAI and the
+`POST /api/ai/parse-transactions` uses Groq-hosted open-weight models and the
 configured model to return transaction drafts for review. It does not
 create or save transactions; after reviewing and completing any uncertain
 fields, submit confirmed data through the existing
@@ -573,8 +573,8 @@ unambiguous relative words `today` and `yesterday` (anchored to the server's
 UTC date). Unsupported, missing, or ambiguous values are returned as `null`
 with an uncertainty instead of being invented.
 
-Set `OPENAI_API_KEY` (required) and optionally `OPENAI_MODEL` (default
-`gpt-4o-mini`) in `server/.env`. The text of each request is sent to OpenAI, so
+Set `GROQ_API_KEY` (required) and optionally `AI_MODEL` (default
+`llama-3.3-70b-versatile`) in `server/.env`. The text of each request is sent to Groq, so
 avoid entering data you do not want shared with that provider. Keep the key
 server-side only. AI pricing recommendations use `AI_PRICING_TIMEOUT_MS` (default 180000 milliseconds), while transaction parsing retains its existing
 separate timeout.
@@ -609,9 +609,9 @@ Invoke-RestMethod -Method Post `
 ```
 
 Malformed model JSON or schema output returns HTTP `502` with
-`INVALID_AI_OUTPUT`. An OpenAI failure (invalid key, quota, network) returns
+`INVALID_AI_OUTPUT`. A Groq failure (invalid key, quota, network) returns
 HTTP `503` with `AI_PROVIDER_UNAVAILABLE` without exposing provider details.
-The focused tests use a fake OpenAI client to exercise valid and malformed
+The focused tests use a fake chat client to exercise valid and malformed
 provider output, ambiguous fields, and unavailable-provider handling:
 
 ```powershell
@@ -631,10 +631,10 @@ health check `/api/health`). `--include=dev` is required because Render sets
    select it.
 2. Set the secret environment variables when prompted (they are `sync: false` and never stored in the repo):
    - `MONGODB_URI`: your Atlas connection string.
-   - `OPENAI_API_KEY`: your OpenAI API key.
+   - `GROQ_API_KEY`: your Groq API key.
    - `CLIENT_ORIGIN`: the service's public URL, e.g.
      `https://ledger.onrender.com` (used for CORS).
-   - `OPENAI_MODEL` is optional and defaults to `gpt-4o-mini`.
+   - `AI_MODEL` is optional and defaults to `llama-3.3-70b-versatile`.
 3. In Atlas **Network Access**, allow Render to connect. Render web services
    use shared outbound IP ranges (listed under the service's **Connect →
    Outbound** tab); add those, or use `0.0.0.0/0` only if you accept that risk

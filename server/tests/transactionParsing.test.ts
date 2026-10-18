@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
-import { completionWith, fakeOpenAiClient } from "./openaiFake.js";
+import { completionWith, fakeChatClient } from "./chatFake.js";
 import { test } from "node:test";
 import {
   AiProviderUnavailableError,
   InvalidAiModelOutputError,
 } from "../src/services/ai/transactionParser.js";
-import { OpenAiTransactionParser } from "../src/services/ai/openaiTransactionParser.js";
+import { llmTransactionParser } from "../src/services/ai/llmTransactionParser.js";
 import { normalizeTransactionDrafts } from "../src/services/ai/normalizeTransactionDrafts.js";
 
 const referenceDate = "2026-10-16";
@@ -105,12 +105,12 @@ test("rejects malformed model output and ungrounded amounts", () => {
   assert.equal(result.uncertainties[0]?.field, "amount");
 });
 
-test("reports an unavailable OpenAI service without exposing network errors", async () => {
-  const parser = new OpenAiTransactionParser(
-    fakeOpenAiClient(async () => {
+test("reports an unavailable Groq service without exposing network errors", async () => {
+  const parser = new llmTransactionParser(
+    fakeChatClient(async () => {
       throw new Error("private transport detail");
     }),
-    "gpt-4o-mini",
+    "llama-3.3-70b-versatile",
   );
 
   await assert.rejects(
@@ -119,11 +119,11 @@ test("reports an unavailable OpenAI service without exposing network errors", as
   );
 });
 
-test("rejects malformed JSON returned by OpenAI", async () => {
-  const parser = new OpenAiTransactionParser(
-    fakeOpenAiClient(async () =>
+test("rejects malformed JSON returned by Groq", async () => {
+  const parser = new llmTransactionParser(
+    fakeChatClient(async () =>
       completionWith("not JSON")),
-    "gpt-4o-mini",
+    "llama-3.3-70b-versatile",
   );
 
   await assert.rejects(
@@ -132,11 +132,11 @@ test("rejects malformed JSON returned by OpenAI", async () => {
   );
 });
 
-test("accepts valid OpenAI JSON output for subsequent server validation", async () => {
-  const parser = new OpenAiTransactionParser(
-    fakeOpenAiClient(async () =>
+test("accepts valid Groq JSON output for subsequent server validation", async () => {
+  const parser = new llmTransactionParser(
+    fakeChatClient(async () =>
       completionWith(JSON.stringify(validModelOutput))),
-    "gpt-4o-mini",
+    "llama-3.3-70b-versatile",
   );
 
   const rawOutput = await parser.parseTransactions(

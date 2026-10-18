@@ -6,8 +6,8 @@ import {
   calculatePricing,
   PricingPrecisionError,
 } from "../services/pricingCalculator.js";
-import { OpenAiPricingRecommender } from "../services/ai/openaiPricingRecommender.js";
-import { createOpenAiClient } from "../services/ai/openaiClient.js";
+import { llmPricingRecommender } from "../services/ai/llmPricingRecommender.js";
+import { createGroqClient } from "../services/ai/chatClient.js";
 import {
   InvalidPricingRecommendationError,
   PricingAiProviderUnavailableError,
@@ -70,7 +70,7 @@ export function createPricingRouter(
           error: {
             code: "AI_PROVIDER_UNAVAILABLE",
             message:
-              "The AI service is unavailable. Check the server's OpenAI configuration and try again.",
+              "The AI service is unavailable. Check the server's Groq configuration and try again.",
           },
         });
         return;
@@ -153,9 +153,9 @@ export function createPricingRouter(
 }
 
 export const pricingRouter = createPricingRouter(
-  new OpenAiPricingRecommender(
-    createOpenAiClient(env.OPENAI_API_KEY),
-    env.OPENAI_MODEL,
+  new llmPricingRecommender(
+    createGroqClient(env.GROQ_API_KEY),
+    env.AI_MODEL,
     env.AI_PRICING_TIMEOUT_MS,
   ),
 );

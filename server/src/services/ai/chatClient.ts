@@ -26,8 +26,12 @@ export interface ChatCompletionClient {
   };
 }
 
-export function createOpenAiClient(apiKey: string): ChatCompletionClient {
-  return new OpenAI({ apiKey, maxRetries: 1 }) as unknown as ChatCompletionClient;
+export function createGroqClient(apiKey: string): ChatCompletionClient {
+  return new OpenAI({
+    apiKey,
+    baseURL: "https://api.groq.com/openai/v1",
+    maxRetries: 1,
+  }) as unknown as ChatCompletionClient;
 }
 
 export function isChatCompletionResult(
