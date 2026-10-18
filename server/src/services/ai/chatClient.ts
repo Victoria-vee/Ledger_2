@@ -4,6 +4,7 @@ export interface ChatCompletionRequest {
   model: string;
   temperature: number;
   max_completion_tokens: number;
+  reasoning_effort?: "low" | "medium" | "high";
   response_format: { type: "json_object" };
   messages: Array<{ role: "system" | "user"; content: string }>;
 }
@@ -24,6 +25,20 @@ export interface ChatCompletionClient {
       ): Promise<ChatCompletionResult>;
     };
   };
+}
+
+export function logUpstreamFailure(context: string, error: unknown): void {
+  const status =
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof error.status === "number"
+      ? error.status
+      : "none";
+  const name = error instanceof Error ? error.name : "UnknownError";
+  console.error(
+    `Groq request failed (${context}): status=${status} error=${name}`,
+  );
 }
 
 export function createGroqClient(apiKey: string): ChatCompletionClient {

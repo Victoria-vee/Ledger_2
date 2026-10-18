@@ -34,7 +34,7 @@ Copy-Item server/.env.example server/.env
 The example file contains placeholder values only. Edit `server/.env` locally
 and replace `MONGODB_URI` with the connection string from your Atlas cluster and
 `GROQ_API_KEY` with a key from your Groq account (https://console.groq.com) (`AI_MODEL` defaults
-to `llama-3.3-70b-versatile`).
+to `openai/gpt-oss-120b`).
 Do not paste it into chat, commit `.env` files, or put secrets in frontend
 environment variables.
 
@@ -574,7 +574,7 @@ UTC date). Unsupported, missing, or ambiguous values are returned as `null`
 with an uncertainty instead of being invented.
 
 Set `GROQ_API_KEY` (required) and optionally `AI_MODEL` (default
-`llama-3.3-70b-versatile`) in `server/.env`. The text of each request is sent to Groq, so
+`openai/gpt-oss-120b`) in `server/.env`. The text of each request is sent to Groq, so
 avoid entering data you do not want shared with that provider. Keep the key
 server-side only. AI pricing recommendations use `AI_PRICING_TIMEOUT_MS` (default 180000 milliseconds), while transaction parsing retains its existing
 separate timeout.
@@ -634,7 +634,7 @@ health check `/api/health`). `--include=dev` is required because Render sets
    - `GROQ_API_KEY`: your Groq API key.
    - `CLIENT_ORIGIN`: the service's public URL, e.g.
      `https://ledger.onrender.com` (used for CORS).
-   - `AI_MODEL` is optional and defaults to `llama-3.3-70b-versatile`.
+   - `AI_MODEL` is optional and defaults to `openai/gpt-oss-120b`.
 3. In Atlas **Network Access**, allow Render to connect. Render web services
    use shared outbound IP ranges (listed under the service's **Connect →
    Outbound** tab); add those, or use `0.0.0.0/0` only if you accept that risk

@@ -5,7 +5,7 @@ import {
   AiProviderUnavailableError,
   InvalidAiModelOutputError,
 } from "../src/services/ai/transactionParser.js";
-import { llmTransactionParser } from "../src/services/ai/llmTransactionParser.js";
+import { LlmTransactionParser } from "../src/services/ai/llmTransactionParser.js";
 import { normalizeTransactionDrafts } from "../src/services/ai/normalizeTransactionDrafts.js";
 
 const referenceDate = "2026-10-16";
@@ -106,11 +106,11 @@ test("rejects malformed model output and ungrounded amounts", () => {
 });
 
 test("reports an unavailable Groq service without exposing network errors", async () => {
-  const parser = new llmTransactionParser(
+  const parser = new LlmTransactionParser(
     fakeChatClient(async () => {
       throw new Error("private transport detail");
     }),
-    "llama-3.3-70b-versatile",
+    "openai/gpt-oss-120b",
   );
 
   await assert.rejects(
@@ -120,10 +120,10 @@ test("reports an unavailable Groq service without exposing network errors", asyn
 });
 
 test("rejects malformed JSON returned by Groq", async () => {
-  const parser = new llmTransactionParser(
+  const parser = new LlmTransactionParser(
     fakeChatClient(async () =>
       completionWith("not JSON")),
-    "llama-3.3-70b-versatile",
+    "openai/gpt-oss-120b",
   );
 
   await assert.rejects(
@@ -133,10 +133,10 @@ test("rejects malformed JSON returned by Groq", async () => {
 });
 
 test("accepts valid Groq JSON output for subsequent server validation", async () => {
-  const parser = new llmTransactionParser(
+  const parser = new LlmTransactionParser(
     fakeChatClient(async () =>
       completionWith(JSON.stringify(validModelOutput))),
-    "llama-3.3-70b-versatile",
+    "openai/gpt-oss-120b",
   );
 
   const rawOutput = await parser.parseTransactions(

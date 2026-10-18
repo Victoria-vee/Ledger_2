@@ -1,6 +1,7 @@
 import { modelTransactionParseJsonSchema } from "../../schemas/ai.js";
 import {
   isChatCompletionResult,
+  logUpstreamFailure,
   type ChatCompletionClient,
 } from "./chatClient.js";
 import {
@@ -9,7 +10,7 @@ import {
   type TransactionParser,
 } from "./transactionParser.js";
 
-export class llmTransactionParser implements TransactionParser {
+export class LlmTransactionParser implements TransactionParser {
   constructor(
     private readonly client: ChatCompletionClient,
     private readonly model: string,
@@ -25,7 +26,8 @@ export class llmTransactionParser implements TransactionParser {
         {
           model: this.model,
           temperature: 0,
-          max_completion_tokens: 1200,
+          max_completion_tokens: 4000,
+          reasoning_effort: "low",
           response_format: { type: "json_object" },
           messages: [
             {
@@ -51,7 +53,8 @@ export class llmTransactionParser implements TransactionParser {
         },
         { signal: AbortSignal.timeout(60_000) },
       );
-    } catch {
+    } catch (error) {
+      logUpstreamFailure("transaction parsing", error);
       throw new AiProviderUnavailableError();
     }
 

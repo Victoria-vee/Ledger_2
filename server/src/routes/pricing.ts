@@ -6,7 +6,7 @@ import {
   calculatePricing,
   PricingPrecisionError,
 } from "../services/pricingCalculator.js";
-import { llmPricingRecommender } from "../services/ai/llmPricingRecommender.js";
+import { LlmPricingRecommender } from "../services/ai/llmPricingRecommender.js";
 import { createGroqClient } from "../services/ai/chatClient.js";
 import {
   InvalidPricingRecommendationError,
@@ -153,7 +153,7 @@ export function createPricingRouter(
 }
 
 export const pricingRouter = createPricingRouter(
-  new llmPricingRecommender(
+  new LlmPricingRecommender(
     createGroqClient(env.GROQ_API_KEY),
     env.AI_MODEL,
     env.AI_PRICING_TIMEOUT_MS,

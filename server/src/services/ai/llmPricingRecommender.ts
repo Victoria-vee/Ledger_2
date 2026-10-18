@@ -3,6 +3,7 @@ import type { PricingCalculation } from "../pricingCalculator.js";
 import type { PricingRecommendationContext } from "../../schemas/pricingRecommendation.js";
 import {
   isChatCompletionResult,
+  logUpstreamFailure,
   type ChatCompletionClient,
 } from "./chatClient.js";
 import {
@@ -26,7 +27,7 @@ function mapTransportError(error: unknown): never {
   throw new PricingAiProviderUnavailableError();
 }
 
-export class llmPricingRecommender implements PricingRecommender {
+export class LlmPricingRecommender implements PricingRecommender {
   constructor(
     private readonly client: ChatCompletionClient,
     private readonly model: string,
@@ -44,7 +45,8 @@ export class llmPricingRecommender implements PricingRecommender {
         {
           model: this.model,
           temperature: 0,
-          max_completion_tokens: 1600,
+          max_completion_tokens: 4000,
+          reasoning_effort: "low",
           response_format: { type: "json_object" },
           messages: [
             {
@@ -77,6 +79,7 @@ export class llmPricingRecommender implements PricingRecommender {
         { signal: AbortSignal.timeout(this.timeoutMs) },
       );
     } catch (error) {
+      logUpstreamFailure("pricing recommendation", error);
       mapTransportError(error);
     }
 

@@ -11,7 +11,7 @@ import {
   PricingAiProviderUnavailableError,
   type PricingRecommender,
 } from "../src/services/ai/pricingRecommender.js";
-import { llmPricingRecommender } from "../src/services/ai/llmPricingRecommender.js";
+import { LlmPricingRecommender } from "../src/services/ai/llmPricingRecommender.js";
 import { createPricingRecommendation } from "../src/services/pricingRecommendation.js";
 
 const request = pricingRecommendationRequestSchema.parse({
@@ -328,11 +328,11 @@ test("omits scenarios when the validated range cannot hold three distinct cent p
 });
 
 test("maps Groq transport failures to a safe provider error", async () => {
-  const recommender = new llmPricingRecommender(
+  const recommender = new LlmPricingRecommender(
     fakeChatClient(async () => {
       throw new Error("private connection detail");
     }),
-    "llama-3.3-70b-versatile", 180_000
+    "openai/gpt-oss-120b", 180_000
   );
 
   await assert.rejects(
@@ -348,10 +348,10 @@ test("maps Groq transport failures to a safe provider error", async () => {
 });
 
 test("maps invalid Groq response and malformed recommendation JSON safely", async () => {
-  const recommender = new llmPricingRecommender(
+  const recommender = new LlmPricingRecommender(
     fakeChatClient(async () =>
       completionWith("not JSON")),
-    "llama-3.3-70b-versatile", 180_000
+    "openai/gpt-oss-120b", 180_000
   );
 
   await assert.rejects(
@@ -366,14 +366,14 @@ test("maps invalid Groq response and malformed recommendation JSON safely", asyn
 
 test("maps an inference timeout to its distinct timeout error", async () => {
   let receivedSignal: AbortSignal | null = null;
-  const recommender = new llmPricingRecommender(
+  const recommender = new LlmPricingRecommender(
     fakeChatClient(async (_input, init) => {
       if (init?.signal instanceof AbortSignal) {
         receivedSignal = init.signal;
       }
       throw new DOMException("inference deadline expired", "TimeoutError");
     }),
-    "llama-3.3-70b-versatile", 180_000
+    "openai/gpt-oss-120b", 180_000
   );
 
   await assert.rejects(
@@ -389,11 +389,11 @@ test("classifies connection refusal as provider unavailable, not timeout", async
       code: "ECONNREFUSED",
     }),
   });
-  const recommender = new llmPricingRecommender(
+  const recommender = new LlmPricingRecommender(
     fakeChatClient(async () => {
       throw connectionError;
     }),
-    "llama-3.3-70b-versatile", 180_000
+    "openai/gpt-oss-120b", 180_000
   );
 
   await assert.rejects(

@@ -10,7 +10,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(5000),
   CLIENT_ORIGIN: z.url().default("http://localhost:5173"),
   GROQ_API_KEY: z.string().trim().min(1, "GROQ_API_KEY is required"),
-  AI_MODEL: z.string().trim().min(1).default("llama-3.3-70b-versatile"),
+  AI_MODEL: z.string().trim().min(1).default("openai/gpt-oss-120b"),
   AI_PRICING_TIMEOUT_MS: z.coerce
     .number()
     .int()
