@@ -2,51 +2,35 @@ import { modelPricingRecommendationJsonSchema } from "../../schemas/pricingRecom
 import type { PricingCalculation } from "../pricingCalculator.js";
 import type { PricingRecommendationContext } from "../../schemas/pricingRecommendation.js";
 import {
+  isChatCompletionResult,
+  type ChatCompletionClient,
+} from "./openaiClient.js";
+import {
   InvalidPricingRecommendationError,
   PricingAiTimeoutError,
   PricingAiProviderUnavailableError,
   type PricingRecommender,
 } from "./pricingRecommender.js";
 
-interface OllamaChatResponse {
-  done_reason?: string;
-  message: {
-    content: string;
-  };
-}
-
-function isOllamaChatResponse(value: unknown): value is OllamaChatResponse {
-  if (typeof value !== "object" || value === null || !("message" in value)) {
-    return false;
-  }
-  const message = value.message;
-  return (
-    typeof message === "object" &&
-    message !== null &&
-    "content" in message &&
-    typeof message.content === "string" &&
-    (!("done_reason" in value) || typeof value.done_reason === "string")
-  );
-}
-
 function mapTransportError(error: unknown): never {
   if (
     typeof error === "object" &&
     error !== null &&
     "name" in error &&
-    (error.name === "TimeoutError" || error.name === "AbortError")
+    (error.name === "TimeoutError" ||
+      error.name === "AbortError" ||
+      error.name === "APIConnectionTimeoutError")
   ) {
     throw new PricingAiTimeoutError();
   }
   throw new PricingAiProviderUnavailableError();
 }
 
-export class OllamaPricingRecommender implements PricingRecommender {
+export class OpenAiPricingRecommender implements PricingRecommender {
   constructor(
-    private readonly baseUrl: string,
+    private readonly client: ChatCompletionClient,
     private readonly model: string,
     private readonly timeoutMs = 180_000,
-    private readonly fetchImplementation: typeof fetch = fetch,
   ) {}
 
   async recommendPricing(
@@ -54,17 +38,14 @@ export class OllamaPricingRecommender implements PricingRecommender {
     minimumPrice: number,
     context: PricingRecommendationContext,
   ): Promise<unknown> {
-    let response: Response;
+    let payload: unknown;
     try {
-      response = await this.fetchImplementation(`${this.baseUrl}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(this.timeoutMs),
-        body: JSON.stringify({
+      payload = await this.client.chat.completions.create(
+        {
           model: this.model,
-          stream: false,
-          format: modelPricingRecommendationJsonSchema,
-          options: { temperature: 0, num_predict: 1600 },
+          temperature: 0,
+          max_completion_tokens: 1600,
+          response_format: { type: "json_object" },
           messages: [
             {
               role: "system",
@@ -79,7 +60,8 @@ export class OllamaPricingRecommender implements PricingRecommender {
                 "Explain that affordability and higher gross profit can trade off. Identify assumptions and material missing information rather than guessing.",
                 "Do not claim market validation. Market evidence, if supplied, is user-provided and not independently verified.",
                 "Do not claim net profit or break-even. The calculation only includes the entered per-unit costs.",
-                "Return only the required JSON object.",
+                "Return only a JSON object matching the JSON schema below.",
+                `JSON schema: ${JSON.stringify(modelPricingRecommendationJsonSchema)}`,
               ].join(" "),
             },
             {
@@ -91,29 +73,22 @@ export class OllamaPricingRecommender implements PricingRecommender {
               }),
             },
           ],
-        }),
-      });
+        },
+        { signal: AbortSignal.timeout(this.timeoutMs) },
+      );
     } catch (error) {
       mapTransportError(error);
     }
 
-    if (!response.ok) {
-      throw new PricingAiProviderUnavailableError();
-    }
-
-    let payload: unknown;
-    try {
-      payload = await response.json();
-    } catch (error) {
-      mapTransportError(error);
-    }
-
-    if (!isOllamaChatResponse(payload) || payload.done_reason === "length") {
+    if (
+      !isChatCompletionResult(payload) ||
+      payload.choices[0]?.finish_reason === "length"
+    ) {
       throw new InvalidPricingRecommendationError("invalid_provider_response");
     }
 
     try {
-      return JSON.parse(payload.message.content) as unknown;
+      return JSON.parse(payload.choices[0]?.message.content ?? "") as unknown;
     } catch {
       throw new InvalidPricingRecommendationError("invalid_model_json");
     }

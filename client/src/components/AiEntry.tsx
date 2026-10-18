@@ -166,7 +166,7 @@ export default function AiEntry({
             {parsing ? "Reading your description…" : "Create draft"}
           </button>
           <p className="text-xs leading-5 text-muted">
-            Ledger sends this text to your local Ollama model. Nothing is saved until you review and confirm a draft below.
+            Ledger sends this text to OpenAI to extract draft transactions. Nothing is saved until you review and confirm a draft below.
           </p>
         </form>
       </section>

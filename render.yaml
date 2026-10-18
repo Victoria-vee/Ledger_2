@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: ledger
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start --workspace=server
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: MONGODB_URI
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini

@@ -4,7 +4,8 @@ import { env } from "../config/env.js";
 import { BusinessModel } from "../models/business.js";
 import { parseTransactionsRequestSchema } from "../schemas/ai.js";
 import { normalizeTransactionDrafts } from "../services/ai/normalizeTransactionDrafts.js";
-import { OllamaTransactionParser } from "../services/ai/ollamaTransactionParser.js";
+import { OpenAiTransactionParser } from "../services/ai/openaiTransactionParser.js";
+import { createOpenAiClient } from "../services/ai/openaiClient.js";
 import {
   AiProviderUnavailableError,
   InvalidAiModelOutputError,
@@ -12,9 +13,9 @@ import {
 
 export const aiRouter = Router();
 
-const transactionParser = new OllamaTransactionParser(
-  env.AI_OLLAMA_BASE_URL,
-  env.AI_MODEL,
+const transactionParser = new OpenAiTransactionParser(
+  createOpenAiClient(env.OPENAI_API_KEY),
+  env.OPENAI_MODEL,
 );
 
 aiRouter.post("/parse-transactions", async (request, response) => {
@@ -68,7 +69,7 @@ aiRouter.post("/parse-transactions", async (request, response) => {
         error: {
           code: "AI_PROVIDER_UNAVAILABLE",
           message:
-            "The local AI model is unavailable. Start Ollama and ensure the configured model is installed.",
+            "The AI service is unavailable. Check the server's OpenAI configuration and try again.",
         },
       });
       return;
@@ -80,7 +81,7 @@ aiRouter.post("/parse-transactions", async (request, response) => {
         error: {
           code: "INVALID_AI_OUTPUT",
           message:
-            "The local AI model returned an invalid draft. Try clarifying the transaction details.",
+            "The AI model returned an invalid draft. Try clarifying the transaction details.",
         },
       });
       return;

@@ -9,17 +9,8 @@ dotenv.config({
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(5000),
   CLIENT_ORIGIN: z.url().default("http://localhost:5173"),
-  AI_OLLAMA_BASE_URL: z
-    .url()
-    .default("http://127.0.0.1:11434")
-    .refine((value) => {
-      const url = new URL(value);
-      return (
-        url.protocol === "http:" &&
-        ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
-      );
-    }, "AI_OLLAMA_BASE_URL must point to a local Ollama runtime"),
-  AI_MODEL: z.string().trim().min(1).default("gemma3:4b"),
+  OPENAI_API_KEY: z.string().trim().min(1, "OPENAI_API_KEY is required"),
+  OPENAI_MODEL: z.string().trim().min(1).default("gpt-4o-mini"),
   AI_PRICING_TIMEOUT_MS: z.coerce
     .number()
     .int()
